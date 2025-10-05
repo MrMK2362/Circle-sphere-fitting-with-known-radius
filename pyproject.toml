@@ -1,0 +1,22 @@
+[project]
+name = "circle-sphere-fitting-known-radius"
+version = "0.1.0"
+description = "Fitting the centre of circles and spheres when the radius is known"
+authors = [{ name = "Mr.MK", email = "mrmk2362@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "numpy>=1.23"
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0"
+]
+demo = [
+  "matplotlib>=3.8"
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"

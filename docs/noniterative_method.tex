@@ -1,0 +1,60 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{geometry}
+\geometry{margin=1in}
+\title{Algebraic Fitting of Circles and Spheres with a Known Radius}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Problem Statement}
+Given noisy samples $\mathbf{x}_i \in \mathbb{R}^d$ ($d \in \{2,3\}$) drawn from the surface of a circle or sphere whose radius $R$ is known, the goal is to estimate the unknown centre $\mathbf{c} \in \mathbb{R}^d$. Instead of iteratively minimising the geometric residuals, the algebraic approach linearises the constraint
+\begin{equation}
+  \lVert \mathbf{x}_i - \mathbf{c} \rVert_2^2 = R^2
+\end{equation}
+by expanding the squared norm and introducing an auxiliary scalar $\alpha = \mathbf{c}^\top \mathbf{c}$.
+
+\section{Linear System Formulation}
+The expansion gives
+\begin{equation}
+  -2\mathbf{x}_i^\top \mathbf{c} + \alpha = R^2 - \lVert \mathbf{x}_i \rVert_2^2.
+\end{equation}
+Stacking all $n$ equations yields the overdetermined linear system
+\begin{equation}
+  \label{eq:linear_system}
+  \mathbf{A} \begin{bmatrix} \mathbf{c} \\ \alpha \end{bmatrix} = \mathbf{b},
+\end{equation}
+with
+\begin{equation}
+  \mathbf{A} =
+  \begin{bmatrix}
+    -2\mathbf{x}_1^\top & 1 \\
+    \vdots & \vdots \\
+    -2\mathbf{x}_n^\top & 1
+  \end{bmatrix},
+  \qquad
+  \mathbf{b} =
+  \begin{bmatrix}
+    R^2 - \lVert \mathbf{x}_1 \rVert_2^2 \\
+    \vdots \\
+    R^2 - \lVert \mathbf{x}_n \rVert_2^2
+  \end{bmatrix}.
+\end{equation}
+Optional weights $w_i > 0$ enter via multiplication of the $i$-th row of both $\mathbf{A}$ and $\mathbf{b}$ by $\sqrt{w_i}$.
+
+Solving \eqref{eq:linear_system} in the least-squares sense produces the estimate $(\widehat{\mathbf{c}}, \widehat{\alpha})$. The auxiliary parameter only serves to decouple the quadratic term and is discarded after the solve.
+
+\section{Properties}
+The algebraic solution is computationally efficient: the system size is $(d+1)$ unknowns regardless of the number of samples. Analyses of algebraic circle fitting show that such approaches yield unbiased estimates for small noise levels when the data are well distributed. Weighted least squares maintains this behaviour for circle fitting, and the same reasoning applies to the fixed-radius scenario considered here.
+
+The method is sensitive to degenerate configurations (e.g. points on a line in 2D or in a plane in 3D). Rank-deficiency in $\mathbf{A}$ can be detected via its numerical rank; in that case alternative strategies such as regularisation or iterative refinement should be employed.
+
+\section{Implementation Highlights}
+The accompanying `circle_sphere_fitting.noniterative` module implements Equation~\eqref{eq:linear_system} using NumPy''s `lstsq` solver. The returned `FitResult` reports the centre, residual vector $\lVert \widehat{\mathbf{c}} - \mathbf{x}_i \rVert_2 - R$, the RMSE, and a success flag indicating whether the design matrix had full rank.
+
+
+\end{document}

@@ -1,0 +1,61 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{geometry}
+\geometry{margin=1in}
+\title{Gauss--Newton Fitting of Circles and Spheres with a Known Radius}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Problem Statement}
+Let $\mathbf{x}_i \in \mathbb{R}^d$ ($d \in \{2,3\}$) denote noisy measurements sampled from the surface of a circle or sphere with a known radius $R$. The unknown centre $\mathbf{c} \in \mathbb{R}^d$ is estimated by minimising the orthogonal distance residuals
+\begin{equation}
+  \label{eq:residuals}
+  r_i(\mathbf{c}) = \lVert \mathbf{x}_i - \mathbf{c} \rVert_2 - R.
+\end{equation}
+The weighted nonlinear least-squares problem reads
+\begin{equation}
+  \label{eq:objective}
+  \min_{\mathbf{c} \in \mathbb{R}^d} \; \frac{1}{2} \sum_{i=1}^n w_i \, r_i(\mathbf{c})^2,
+\end{equation}
+where $w_i > 0$ modulate the confidence assigned to each observation (set $w_i = 1$ for uniform weighting).
+
+\section{Gauss--Newton Iterations}
+Equation~\eqref{eq:objective} is smooth, so Gauss--Newton iterations provide an efficient solver. Let $\mathbf{c}^{(k)}$ denote the current centre estimate. Linearising the residuals around this iterate gives
+\begin{equation}
+  \mathbf{r}(\mathbf{c}^{(k)} + \Delta \mathbf{c}) \approx \mathbf{r}(\mathbf{c}^{(k)}) + \mathbf{J}(\mathbf{c}^{(k)}) \, \Delta \mathbf{c},
+\end{equation}
+where the Jacobian rows are
+\begin{equation}
+  \mathbf{J}_i(\mathbf{c}^{(k)}) = \frac{\partial r_i}{\partial \mathbf{c}}\Big\rvert_{\mathbf{c}=\mathbf{c}^{(k)}} = \frac{\mathbf{c}^{(k)} - \mathbf{x}_i}{\lVert \mathbf{x}_i - \mathbf{c}^{(k)} \rVert_2}.
+\end{equation}
+Substituting into \eqref{eq:objective} produces the normal equations
+\begin{equation}
+  \label{eq:normal}
+  \mathbf{J}(\mathbf{c}^{(k)})^\top \mathbf{W} \mathbf{J}(\mathbf{c}^{(k)}) \, \Delta \mathbf{c} = - \mathbf{J}(\mathbf{c}^{(k)})^\top \mathbf{W} \mathbf{r}(\mathbf{c}^{(k)}),
+\end{equation}
+with $\mathbf{W} = \mathrm{diag}(w_1,\dots,w_n)$. Solving \eqref{eq:normal} yields the update direction $\Delta \mathbf{c}$ and the iterate is advanced as $\mathbf{c}^{(k+1)} = \mathbf{c}^{(k)} + \Delta \mathbf{c}$.
+
+\section{Initialization and Convergence}
+A practical scheme requires an initial guess $\mathbf{c}^{(0)}$. Two simple choices are the sample centroid (uniform weights) or the weighted centroid $\sum_i w_i \mathbf{x}_i / \sum_i w_i$. The iterations terminate when either $\lVert \Delta \mathbf{c} \rVert_2$ or the weighted root-mean-square error (RMSE)
+\begin{equation}
+  \mathrm{RMSE} = \sqrt{ \frac{\sum_i w_i \, r_i(\mathbf{c}^{(k)})^2}{\sum_i w_i} }
+\end{equation}
+falls below a prescribed tolerance. The method converges quadratically when the residuals are small and the Jacobian has full column rank.
+
+Robustness can be improved by discarding points with $\lVert \mathbf{x}_i - \mathbf{c}^{(k)} \rVert_2 \approx 0$ (which otherwise destabilise the Jacobian) and by capping the number of iterations. In practice, a handful of steps suffices when the initial guess is close to the true centre. The iterative refinement enforces geometric distances, aligning with standard statistically consistent orthogonal fitting practices.
+
+\section{Implementation Highlights}
+The accompanying `circle_sphere_fitting.iterative` module implements the procedure as follows:
+\begin{itemize}
+  \item Inputs are validated for dimensional consistency and positive radii.
+  \item The initial centre defaults to the (weighted) centroid but can be overridden by the user.
+  \item Gauss--Newton updates reuse NumPy''s `lstsq` solver, and iteration metadata (success flag, RMSE, iteration count) is captured in a `FitResult` data class for downstream analysis.
+\end{itemize}
+
+
+\end{document}
