@@ -81,6 +81,8 @@ python examples/demo.py
 ```
 The script prints numerical comparisons and saves `examples/demo_output.png`, illustrating both methods on synthetic circle and sphere data.
 
+![Demo output](examples/demo_output.png)
+
 ## Theory Notes
 - `docs/noniterative_method.pdf`: derivation of the algebraic least-squares formulation.
 - `docs/iterative_method.pdf`: Gauss--Newton optimisation details and convergence considerations.
